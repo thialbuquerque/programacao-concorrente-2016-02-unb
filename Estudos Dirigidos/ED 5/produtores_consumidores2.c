@@ -16,9 +16,9 @@
 #define PRODUCER 5
 
 pthread_cond_t prod = PTHREAD_COND_INITIALIZER,
-	       cons = PTHREAD_COND_INITIALIZER;
+	       	   cons = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutexP = PTHREAD_MUTEX_INITIALIZER,
-		mutexC = PTHREAD_MUTEX_INITIALIZER;
+				mutexC = PTHREAD_MUTEX_INITIALIZER;
 		
 
 int prod_pos = 0,
@@ -33,7 +33,7 @@ void * consumer (void * arg);
 int main (int argc, char * argv[])
 {
 	pthread_t producerThread[PRODUCER],
-		  consumerThread[CONSUMER];
+			  consumerThread[CONSUMER];
 	int i = 0,
 	    * idC = NULL,
 	    * idP = NULL;

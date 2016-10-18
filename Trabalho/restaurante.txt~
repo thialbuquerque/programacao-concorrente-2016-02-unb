@@ -1,0 +1,28 @@
+O que fazer?
+
+O trabalho consiste em um restaurante vegano (Peacefull Taste ou Sabor Pacífico). O restaurante deve ter garçons e garçonetes, cozinheiros, mesas, cadeiras, banheiros, um anfitrião e dois caixas (dinheiro ou cartão).
+O restaurante pode ficar cheio e, nesse caso, o novo cliente vai embora; a comida nunca acabará, o restaurante sempre terá suprimentos suficientes; o restaurante abre 3 vezes ao dia por algumas horas; o número de mesas é mapeado e sempre cada mesa pode ter no máximo 5 lugares; clientes sentam juntos somente quando estiverem juntos; serão necessárias algumas funções, uma para o cozinheiro, uma para os clientes (talvez um monitor contendo algumas ações possíveis para os clientes, como pratos, comer, ir ao banheiro, ir à fila do caixa pagar a conta, esperar na fila etc), umas função para os garçons.
+
+Serão necessárias algumas variáveis de sincronização do tipo lock para o banheiro, para o caixa, para a fila (concorrente?), para as mesas e cadeiras. Cada mesa deve ter um id e pelo menos 5 lugares, cada cadeira com seu respectivo id, referente àquela mesa. Pode ser criada uma matriz, onde casa linha representa uma mesa e cada elemento de uma dada linha representa uma cadeira. Cada elemento deve ser do tipo booleano, pois assim, saber-se-á que uma cadeira está ocupada caso o valor na posição referente à ela da matriz for 1, e 0 caso não esteja ocupada. Deve-se pensar a respeito da possibilidade de clientes desconhecidos sentarem-se juntos ou permitir que clientes sentem juntos somente se eles chegarem juntos ao restaurante (deve-se pensar a respeito do trabalho que isso pode dar). 
+
+Talvez seja uma boa ideia utilizar os clocks do computador. Dessa forma, pode-se gerar um valor aleatório que indicaria quanto tempo um cliente ficará no restaurante, e os clocks contados até chegar nesse valor gerado. Ao alcançar um número de clocks igual ao valor gerado, o cliente entra na fila do caixa e, assim que pagar sua conta, a qual deve ser calculada a medida que ele consome, ele vai embora do restaurante, alertando o anfitrião de que há um cliente a menos no restaurante. 
+
+-Cozinheiro (Quantos?):
+	O cozinheiro pode preparar alguns pratos, os quais estarão no menu e disponíveis aos clientes. Há uma opção especial que é "Escolha do Chefe", onde o próprio chefe escolhe um prato especial para o cliente. O chefe é sinalizado sempre que um cliente faz um pedido, caso contrário, permanece inativo.
+-Clientes:
+	Algumas funcionalidades deem ser implementadas para os clientes. Tais funcionalidades podem ser 	
+-Garçons:
+	
+-Fila:
+	
+-Caixas:
+	
+-Anfitrião (semáforo):
+	
+-Banheiro:
+	
+-Cadeiras:
+	
+-Mesas:
+	
+-
