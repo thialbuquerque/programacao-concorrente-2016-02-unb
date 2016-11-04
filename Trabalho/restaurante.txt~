@@ -10,7 +10,7 @@ Talvez seja uma boa ideia utilizar os clocks do computador. Dessa forma, pode-se
 -Cozinheiro (Quantos?):
 	O cozinheiro pode preparar alguns pratos, os quais estarão no menu e disponíveis aos clientes. Há uma opção especial que é "Escolha do Chefe", onde o próprio chefe escolhe um prato especial para o cliente. O chefe é sinalizado sempre que um cliente faz um pedido, caso contrário, permanece inativo.
 -Clientes:
-	Algumas funcionalidades deem ser implementadas para os clientes. Tais funcionalidades podem ser 	
+	Algumas funcionalidades deem ser implementadas para os clientes. Tais funcionalidades podem ser chegar 	
 -Garçons:
 	
 -Fila:

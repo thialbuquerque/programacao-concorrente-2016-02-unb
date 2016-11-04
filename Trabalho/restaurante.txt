@@ -7,6 +7,8 @@ Serão necessárias algumas variáveis de sincronização do tipo lock para o ba
 
 Talvez seja uma boa ideia utilizar os clocks do computador. Dessa forma, pode-se gerar um valor aleatório que indicaria quanto tempo um cliente ficará no restaurante, e os clocks contados até chegar nesse valor gerado. Ao alcançar um número de clocks igual ao valor gerado, o cliente entra na fila do caixa e, assim que pagar sua conta, a qual deve ser calculada a medida que ele consome, ele vai embora do restaurante, alertando o anfitrião de que há um cliente a menos no restaurante. 
 
+100 cadeiras, 20 mesas, cada uma com 5 lugares
+
 -Cozinheiro (Quantos?):
 	O cozinheiro pode preparar alguns pratos, os quais estarão no menu e disponíveis aos clientes. Há uma opção especial que é "Escolha do Chefe", onde o próprio chefe escolhe um prato especial para o cliente. O chefe é sinalizado sempre que um cliente faz um pedido, caso contrário, permanece inativo.
 -Clientes:
