@@ -15,9 +15,9 @@ QUEUE ** cashierQueue = NULL;
 
 /*PROTOTYPES*/
 QUEUE * create_queue (void);	/*QUEUE NEW ELEMENTS*/
-int queue (QUEUE **, int );	/*QUEUE NEW ELEMENTS*/
-int dequeue (QUEUE **);	/*DEQUEUE ELEMENTS*/
-int isEmpty (QUEUE **);
-int consultQueue (QUEUE *);	/*CONSULT ELEMENTS OF THE QUEUE*/
+int queue (QUEUE ** q, int id);	/*QUEUE NEW ELEMENTS*/
+int dequeue (QUEUE ** q);	/*DEQUEUE ELEMENTS*/
+int isEmpty (QUEUE ** q);
+int consultQueue (QUEUE * q);	/*CONSULT ELEMENTS OF THE QUEUE*/
 
 #include "../functions/queue.c"

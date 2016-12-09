@@ -1,17 +1,20 @@
 /*
-*Algorithm:			Simulador de Restaurante
-*Description:		O programa visa implementar a ideia de um restaurante vegano aplicando conceitos de programação concorrente 
-					para manter um certo nível de fidelidade à realidade.
-*Author: 			Thiago de Oliveira Albuquerque
-*Discipline:		Tópicos Avançados em Computadores - Programação Concorrente
-*Class: 			E
-*Date: 				2016/02
-*Registration:		14/0177442
-*Institution: 		Universidade De Brasília (UnB)
-*Academic level:	Graduação
-*Course:			Engenharia de Computação
-*
-**/
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *Algorithm:			Simulador de Restaurante                                    *
+ *File name:         restaurante.c                                               *
+ *Description:		O programa visa implementar a ideia de um restaurante vegano* 
+ *                   aplicando conceitos de programação concorrente              *
+ *					para manter um certo nível de fidelidade à realidade.       *
+ *Author: 			Thiago de Oliveira Albuquerque                              *
+ *Discipline:		Tópicos Avançados em Computadores - Programação Concorrente *
+ *Class: 			E                                                           *
+ *Date: 				2016/02                                                     *
+ *Registration:		14/0177442                                                  *
+ *Institution: 		Universidade De Brasília (UnB)                              *
+ *Academic level:	Graduação                                                   *
+ *Course:			Engenharia de Computação                                    *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,31 +28,8 @@
 #include "headers/queue.h"
 #include "headers/functions.h"
 
-
-#ifndef CLIENTS
-	#define CLIENTS 55
-#endif
-#ifndef CLIENTS_MAX
-	#define CLIENTS_MAX 100
-#endif
-#ifndef COOKER
-	#define COOKER 10
-#endif
-#ifndef WAITER
-	#define WAITER 10 
-#endif
-#ifndef TABLES
-	#define TABLES 20 
-#endif
-#ifndef CHAIRS
-	#define CHAIRS 5 
-#endif
-
-
-
 int main (int argc, char * argv[])
 {
-	/*system ("stty -echo");*/
 	pthread_t	clientsThread[CLIENTS],
 				cookerThread[COOKER],
 				waiterThread[WAITER], 
@@ -67,21 +47,6 @@ int main (int argc, char * argv[])
 
 	initializer ();
 
-	/*queue (cashierQueue, 1);
-	queue (cashierQueue, 3);
-	queue (cashierQueue, 2);
-	consultQueue (*cashierQueue);
-	dequeue (cashierQueue);
-	consultQueue (*cashierQueue);
-	dequeue (cashierQueue);
-	consultQueue (*cashierQueue);
-	dequeue (cashierQueue);
-	consultQueue (*cashierQueue);
-	queue (cashierQueue, 3);
-	queue (cashierQueue, 2);
-	consultQueue (*cashierQueue);
-	getchar ();*/
-
 	printf (RESET);
 	presentation ();
 
@@ -91,9 +56,9 @@ int main (int argc, char * argv[])
 	clrscr ();
 	printf ("INFO: Get out of the monitoring by typing any character, but 'c'...\n");
 	sleep (3);
-	printf ("Color legend:\n");
-	printf (RESET "Cooker - " GREEN "%c\n" RESET "Hoster - " YELLOW "%c\n" RESET "Waiter - " MAGENTA "%c\n" RESET "Client - " CYAN "%c\n" RESET, 127, 127, 127, 127);
-	sleep (2);
+	printf ("\nColor legend:\n");
+	printf (RESET "Cooker - " GREEN "%c\n" RESET "Hoster - " YELLOW "%c\n" RESET "Waiter - " MAGENTA "%c\n" RESET "Client - " CYAN "%c\n" RESET, 35, 35, 35, 35);
+	sleep (5);
 	clrscr ();
 
 	cashierQueue = (QUEUE **) malloc (sizeof(QUEUE *));
@@ -137,37 +102,76 @@ int main (int argc, char * argv[])
 			return -1;
 	}
 
+	pthread_mutex_lock (&confirmationMutex);
+	do
+	{
+		pthread_cond_wait (&exitCond, &confirmationMutex);
+		
+		pthread_mutex_lock (&outputMutex);
+		output = 0;
+		pthread_mutex_unlock (&outputMutex);
+
+        clrscr ();
+        if (seconds != TIME && finished != 1)
+       	{
+       		printf ("Do you want to keep monitoring the client flow in the restaurant?\nOption (Y/N): ");
+	    
+		    do
+		    {
+		       	scanf (" %c", &exitConfirmation);
+		       	exitConfirmation = toupper (exitConfirmation);
+		       	if (exitConfirmation != 'Y' && exitConfirmation != 'N')
+		       	{	
+		       		clrscr ();
+		       		printf ("Wrong input!! Try again!!\nOption (Y/N): ");
+		       	}
+		    } while (exitConfirmation != 'Y' && exitConfirmation != 'N');
+
+		    clrscr ();
+		    if (exitConfirmation == 'Y')
+		    {
+		    	pthread_mutex_lock (&outputMutex);
+				output = 1;
+				pthread_mutex_unlock (&outputMutex);
+				exitConfirmation = 0;
+				pthread_cond_signal (&confirmationCond); /*After reading the exit confirmation code, the thread "reader" will verify its value.*/
+		    }
+		    else
+		    	return 0; /*break?*/
+      	}
+      	else
+      		break;
+    
+	} while (exitConfirmation != 'N'); /*If false: The user does not want to keep monitoring the flow in the restaurant.*/
+	pthread_mutex_unlock (&confirmationMutex);    
+	
+	pthread_mutex_lock (&outputMutex);
+	clrscr ();
+	printf (RESET);
+	printf ("\n*Restaurant is closing!!*\n");
+	pthread_mutex_unlock (&outputMutex);
+	sleep (3);
+	
 	pthread_mutex_lock (&exitMutex);
-	if (exitCode == 0)
-	{	
-		pthread_cond_wait (&exitCond, &exitMutex);
-		if (clientCounter > 0)
-		{
-			printf ("*WAITING FOR THE REMAINING CLIENTS!*\n");
-			pthread_cond_wait (&counterCond, &exitMutex);
-		}
+	if (clientCounter > 0)
+	{
+		pthread_mutex_lock (&outputMutex);
+		printf ("*WAITING FOR THE REMAINING CLIENTS!*\n");
+		sleep (2);
 		clrscr ();
-		printf (RESET);
-		printf ("\n*Restaurant is closing!!*\n");
-		sleep (3);
+		output = 1;
+		pthread_mutex_unlock (&outputMutex);
+	
+		pthread_cond_wait (&counterCond, &exitMutex);
 		clrscr ();
-		system ("stty echo");
-		/*if (seconds != TIME)	
-		{
-			if (pthread_join (readerThread, NULL))
-				return -1;
-		}
-		else	
-		{
-			if (pthread_join (timeThread, NULL))
-				return -1;
-		}*/
-		//return 0;
+		printf ("\n*Restaurant is empty!!*\n");
+		sleep (2);
 	}
 	pthread_mutex_unlock (&exitMutex);
 
-		/*ESPERAR ATÉ QUE OS CLIENTES RESTANTES SAIAM DO RESTAURANTE CASO O TEMPO LIMITE SEJA ALCANÇADO
-*/
+	clrscr ();
+	system ("stty echo");
+
 	/*JOINNINGS*/
 	/*if (finished == 1)
 	{	
@@ -183,14 +187,13 @@ int main (int argc, char * argv[])
 				return -1;
 		}
 	}
-	if (exitCode == 0)
+	
+	for (i = 0; i < CLIENTS; i++)
 	{
-		for (i = 0; i < CLIENTS; i++)
-		{
-			if (pthread_join (clientsThread[i], NULL))
-				return -1;
-		}
+		if (pthread_join (clientsThread[i], NULL))
+			return -1;
 	}*/
+	
 	return 0;
 }
 

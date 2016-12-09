@@ -9,10 +9,7 @@ void asterisk (void )
 {
 	int asterisco;
 	
-	#ifndef LIM
-		#define LIM 49 
-	#endif
-	printf ("\t\t");
+	printf (YELLOW "\t\t");
 	for (asterisco = 0; asterisco < LIM; asterisco++)
 		putchar ('*');
 	putchar ('\n');
@@ -23,10 +20,10 @@ void presentation (void)
 	clrscr();
 		
 	asterisk ();
-	printf ("\t\t*\t\tPeaceful Taste\t\t\t*\n");
+	printf (YELLOW "\t\t*\t\t" GREEN "Peaceful Taste" YELLOW "\t\t\t*\n");
 	asterisk ();
 	putchar ('\n');
-	printf ("Be welcome to the most famous vegan restaurant in the world!!\n");
+	printf (RESET "Be welcome to the most famous vegan restaurant in the world!!\n");
 }
 
 void initializer (void)
@@ -39,14 +36,6 @@ void initializer (void)
 	sem_init (&serve, 0, 0);						/*Initializing serve semaphore*/	
 	sem_init (&eat, 0, 0);							/*Initializing eat semaphore*/
 	pthread_barrier_init (&barrier, NULL, CLIENTS);	/*Initializing barrier*/
-}
-
-void print (char * string)
-{
-	mutex
-	verifica se codigo de saida é table
-	imprime
-	mutex
 }
 
 int searchSeat (int * table)
@@ -75,7 +64,7 @@ int searchSeat (int * table)
 	return usedChair;
 }
 
-char getch() 
+char getch(void) 
 {
         char buf = 0;
         struct termios old = {0};
@@ -104,20 +93,35 @@ void * cookers (void * arg)
 	while (1)
 	{	
 		sem_wait (&cooker);
-		
-		if (finished || exitCode)
+
+		pthread_mutex_lock (&exitMutex);
+		if (finished || (seconds == TIME && clientCounter == 0))	/*Either all clients expected to show were attended*/ 
+		{															/*or it is already time for the restaurant to close and all clients*/
+																	/*who were inside the restaurant are gone*/
+			pthread_mutex_unlock (&exitMutex);
 			break;
-		if (seconds == TIME && clientCounter == 0)
-		{
-
 		}
+		pthread_mutex_unlock (&exitMutex);		
 
-		printf (GREEN "Cooker %d" RESET " received the request!\n", id);
-		printf (GREEN "Cooker %d" RESET " started cooking...\n", id);
-		timer = rand()%6 + 1;
+		pthread_mutex_lock (&outputMutex);
+		if (output)
+		{
+			printf (GREEN "Cooker %d" RESET " received the request!\n", id);
+			printf (GREEN "Cooker %d" RESET " started cooking...\n", id);
+		}
+		pthread_mutex_unlock (&outputMutex);
+		
+		timer = rand () % 6 + 1;
 		sleep (timer);
-		printf (GREEN "Cooker %d:" RESET " Food prepared and ready do serve!\n", id);
-		printf (GREEN "Calling a waiter...\n");
+
+		pthread_mutex_lock (&outputMutex);
+		if (output)
+		{
+			printf (GREEN "Cooker %d:" RESET " Food prepared and ready do serve!\n", id);
+			printf (GREEN "Cooker %d is calling a waiter...\n", id);
+		}
+		pthread_mutex_unlock (&outputMutex);
+		
 		sleep (1);
 		sem_post (&serve);
 	}
@@ -133,44 +137,77 @@ void * waiters (void * arg)
 	while (1)														
 	{											
 																	
-		sem_wait (&waiter);														
-		
-		if (finished || exitCode)
-			break;
-		if (seconds == TIME && clientCounter == 0)
-		{
+		sem_wait (&waiter);		
 
+		pthread_mutex_lock (&exitMutex);
+		if (finished || (seconds == TIME && clientCounter == 0))	/*Either all clients expected to show were attended*/ 
+		{															/*or it is already time for the restaurant to close and all clients*/
+																	/*who were inside the restaurant are gone*/
+			pthread_mutex_unlock (&exitMutex);
+			break;
 		}
+		pthread_mutex_unlock (&exitMutex);
 		
-		timer = rand()%3 + 1; 
+		timer = rand () % 3 + 1;
 		sleep (timer);
-		printf (MAGENTA "Waiter %d" RESET " called!\n", id);
+		
+		pthread_mutex_lock (&outputMutex);
+		if (output)
+		{
+			printf (MAGENTA "Waiter %d" RESET " called!\n", id);
+		}
+		pthread_mutex_unlock (&outputMutex);
+
 		sleep (1);
-		printf (MAGENTA "Waiter %d" RESET " noting the request...\n", id);
-		request = rand()%3 + 1;
+		
+		pthread_mutex_lock (&outputMutex);
+		if (output)
+		{
+			printf (MAGENTA "Waiter %d" RESET " noting the request...\n", id);
+		}
+		pthread_mutex_unlock (&outputMutex);
+
+		request = rand () % 3 + 1;
 		sleep (request);
-		printf (MAGENTA "Waiter %d" RESET " making the request to a cooker...\n", id);
+		
+		pthread_mutex_lock (&outputMutex);
+		if (output)
+		{
+			printf (MAGENTA "Waiter %d" RESET " making the request to a cooker...\n", id);
+		}
+		pthread_mutex_unlock (&outputMutex);
+
 		sem_post (&cooker);
 		sem_wait (&serve);
-		printf (MAGENTA "Waiter %d" RESET " is serving the food...\n", id);
+		
+		pthread_mutex_lock (&outputMutex);
+		if (output)
+		{
+			printf (MAGENTA "Waiter %d" RESET " is serving the food...\n", id);
+		}
+		pthread_mutex_unlock (&outputMutex);
+
 		sleep (1);
-		printf(MAGENTA "Food Served!\n");
+		
+		pthread_mutex_lock (&outputMutex);
+		if (output)
+		{
+			printf (MAGENTA "Food Served!\n");
+		}
+		pthread_mutex_unlock (&outputMutex);
+
 		sem_post (&eat);
 	}
 	pthread_exit (NULL);
 }
 
-/*situações em que vai fechar	                            
-quando o tempo acabar	- espera pelos remanecentes		
-quando os clientes acabarem -                           
-quando o codigo for digitado - espera pelos remanecentes*/
 void * clients (void * arg)				
 {
 	int id = *((int *) arg) + 1, 
 		action = 0,
 		table = 0, 
 		usedChair = 0,
-		gender = rand()%2 + 1,	/*1 indicates the client is a woman, 2 indicates the client is a man*/
+		gender = rand () % 2 + 1,	/*1 indicates the client is a woman, 2 indicates the client is a man*/
 		timer = 0,
 		diff = 0,
 		ate = 0,
@@ -179,90 +216,126 @@ void * clients (void * arg)
 		pthread_mutex_lock (&entranceDoorMutex);	/*Only one client can pass through the entrance door at a time*/
 		if (sem_trywait (&hoster) == 0)		/*Once the client is able to pass through the entrance door,*/ 
 		{									/*the client can verify if the restaurant is full or not*/
-			if (firstID == 0)	/*The first thread that enters in the critial region/first client in te restaurant*/
-				firstID = id;	/*The id of the first client in the restaurant is stored*/
-
 			pthread_mutex_unlock (&entranceDoorMutex);	/*Frees the entrance door*/
-			sleep (1);
 
-			pthread_mutex_lock (&clientCounterMutex);
-				clientCounter++;
-			pthread_mutex_unlock (&clientCounterMutex);
+			if (firstID == 0)	/*The first thread that enters in the critical region/first client in the restaurant*/
+				firstID = id;	/*The id of the first client in the restaurant is stored*/
+			sleep (1);	
 
 			pthread_mutex_lock (&seatMutex);	/*One client at a time is gonna sit. It avoids race conditions*/
-			if (exitCode || seconds == TIME)
+			
+			if (seconds == TIME)	/*This condition avoids unnecessary output is shown in case the time for the restaurant to close is reached*/
 			{
-				pthread_mutex_lock (&clientCounterMutex);
-				clientCounter--;
-				if (clientCounter == 0)
-					pthread_cond_signal (&counterCond);
-				pthread_mutex_unlock (&clientCounterMutex);
-				
 				pthread_mutex_unlock (&seatMutex);
 				pthread_exit (NULL);
 			}
+			pthread_mutex_lock (&clientCounterMutex);
+			clientCounter++;	/*Counts the number of clients inside the restaurant*/
+			pthread_mutex_unlock (&clientCounterMutex);
+			
+			pthread_mutex_lock (&outputMutex);
+			if (output)
+			{
+				printf (CYAN "Client %d" RESET " has just arrived!\n", id);
+			}
+			pthread_mutex_unlock (&outputMutex);
 
-			printf (CYAN "Client %d" RESET " has just arrived!\n", id);
 			sleep (1);
-			printf (YELLOW "Hoster" RESET " is taking the client %d to %s seat...\n", id, (gender == 1) ? "her" : "his");	
+			
+			pthread_mutex_lock (&outputMutex);
+			if (output)
+			{
+				printf (YELLOW "Hoster" RESET " is taking the client %d to %s seat...\n", id, (gender == 1) ? "her" : "his");	
+			}
+			pthread_mutex_unlock (&outputMutex);
+
 			usedChair = searchSeat (&table) + 1;
 			table++;
 			sleep (2);
 			
 			diff = CHAIRS - usedChair;
-			printf (CYAN "Client %d" RESET " just sat on the chair %d, chair number %d at the table %d!\n", id, ((table * CHAIRS) - diff), usedChair, table);		
 			
-			/*
-			for (i = 0; i < TABLES; i++)
+			pthread_mutex_lock (&outputMutex);
+			if (output)
 			{
-				for (j = 0; i < CHAIRS; j++)
-				{
-					printf ("%c\n", chairs[i][j]); //imprimir o ID? maitriz de inteiros (short)
-				}
+				printf (CYAN "Client %d" RESET " just sat on the chair %d, chair number %d at the table %d!\n", id, ((table * CHAIRS) - diff), usedChair, table);		
 			}
-			*/
+			pthread_mutex_unlock (&outputMutex);
 
 			pthread_mutex_unlock (&seatMutex);	/*Another client can seat*/
 			
-
 			do
 			{
-				if (exitCode || seconds == TIME)	/*The restaurant is going to close*/
+				if (seconds == TIME)	/*The restaurant is going to close*/
 					action = 3;
 				else
-					action = rand()%3 + 1;	/*The client selects one action*/
-				
+					action = rand () % 7 + 1;	/*The client selects one action. 
+												The client choose between on of the 3 options*/		
 				switch (action) 
 				{
 					case 1:	/*Uses bathroom*/
 					{
 						switch (gender)
 						{
-							timer = rand()%5 + 1;
+							timer = rand () % 2 + 1;
 							case 1:	/*The client is a woman*/
 							{
 								sem_wait (&bathroomFemale);
-								printf (CYAN "Client %d" RESET " is using the lady's room\n", id);		
+								
+								pthread_mutex_lock (&outputMutex);
+								if (output)
+								{
+									printf (CYAN "Client %d" RESET " is using the lady's room\n", id);		
+								}
+								pthread_mutex_unlock (&outputMutex);
+								
 								sem_post (&bathroomFemale);
 							} break;
 							case 2:	/*The client is a man*/
 							{
-								sem_wait (&bathroomMale);
-								printf (CYAN "Client %d" RESET " is using the men's room\n", id);
+								sem_trywait (&bathroomMale);
+								
+								pthread_mutex_lock (&outputMutex);
+								if (output)
+								{
+									printf (CYAN "Client %d" RESET " is using the men's room\n", id);
+								}
+								pthread_mutex_unlock (&outputMutex);
+
 								sem_post (&bathroomMale);
 							} break;
 						}
 						sleep (timer);
-						printf (CYAN "Client %d" RESET " got out of the bathroom\n", id);
+						
+						pthread_mutex_lock (&outputMutex);
+						if (output)
+						{
+							printf (CYAN "Client %d" RESET " got out of the bathroom\n", id);
+						}
+						pthread_mutex_unlock (&outputMutex);	
 					} break;
 					case 2:	/*Order food and eat it*/
 					{
 						sem_post (&waiter);
 						sem_wait (&eat);
-						printf (CYAN "Client %d" RESET " is eating...\n", id);
-						timer = rand()%9 + 1;
+						
+						pthread_mutex_lock (&outputMutex);
+						if (output)
+						{
+							printf (CYAN "Client %d" RESET " is eating...\n", id);		
+						}
+						pthread_mutex_unlock (&outputMutex);
+						
+						timer = rand () % 9 + 1;
 						sleep (timer);
-						printf (CYAN "Client %d" RESET " finished eating!\n", id);
+						
+						pthread_mutex_lock (&outputMutex);
+						if (output)
+						{
+							printf (CYAN "Client %d" RESET " finished eating!\n", id);
+						}
+						pthread_mutex_unlock (&outputMutex);
+
 						ate = 1;
 					} break;
 					case 3: /*Go to the cashier to pay the bill and leave the restaurant*/
@@ -275,7 +348,14 @@ void * clients (void * arg)
 							pthread_mutex_unlock (&queueAccessMutex);
 						
 							pthread_mutex_lock (&cashierMutex);
-							printf(CYAN "Client %d" RESET " is paying the bill.\n", id);
+							
+							pthread_mutex_lock (&outputMutex);
+							if (output)
+							{
+								printf(CYAN "Client %d" RESET " is paying the bill.\n", id);						
+							}
+							pthread_mutex_unlock (&outputMutex);
+							
 							sleep (1);
 
 							pthread_mutex_lock (&queueAccessMutex);
@@ -284,31 +364,51 @@ void * clients (void * arg)
 							
 							pthread_mutex_unlock (&cashierMutex);
 
-							printf(CYAN "Client %d" RESET " payed the bill.\n", id);
+							pthread_mutex_lock (&outputMutex);
+							if (output)
+							{
+								printf(CYAN "Client %d" RESET " payed the bill.\n", id);
+							}
+							pthread_mutex_unlock (&outputMutex);	
 						}
-									
-						printf (CYAN "Client %d" RESET " is leaving!!\n", id);
-						table--;
-						usedChair--;
+						
+						pthread_mutex_lock (&outputMutex);
+						if (output)
+						{			
+							printf (CYAN "Client %d" RESET " is leaving!!\n", id);
+						}
+						pthread_mutex_unlock (&outputMutex);
 						
 						pthread_mutex_lock (&seatMutex);
+						table--;
+						usedChair--;
 						chairs[table][usedChair] = '0';
 						pthread_mutex_unlock (&seatMutex);
 						
-						sleep (1);
 						pthread_mutex_lock (&clientCounterMutex);
 						clientCounter--;
-						if (exitCode && clientCounter == 0)
+						if (clientCounter == 0)
 							pthread_cond_signal (&counterCond);
 						pthread_mutex_unlock (&clientCounterMutex);
+
+						sleep (1);
 						
 						pthread_mutex_lock (&exitDoorMutex);
-						if (exitCode == 0 && seconds != TIME)	
+						pthread_mutex_lock (&exitMutex);
+						if (seconds != TIME)
+						{	
+							pthread_mutex_unlock (&exitMutex);
 							sem_post (&hoster);
+						}
 						else
+						{
+							pthread_mutex_unlock (&exitMutex);
+							pthread_mutex_unlock (&exitDoorMutex);
 							pthread_exit (NULL);
-						sleep (1);
-						pthread_mutex_unlock (&exitDoorMutex);	
+						}
+						pthread_mutex_unlock (&exitDoorMutex);
+
+						sleep (1);	
 					} break;
 				}
 			} while (action != 3);
@@ -318,10 +418,13 @@ void * clients (void * arg)
 			pthread_mutex_unlock (&entranceDoorMutex);
 		}
 
-	pthread_barrier_wait (&barrier);
-	if (firstID == id)
+	pthread_barrier_wait (&barrier);	/*Controls the access to "finished", which determines if all clients expected
+										to appear were attended*/
+	if (firstID == id)	/*Just the first thread that had access to the entrance door 
+						executes the instructions after the barrier*/
 	{
-		finished = 1;
+		finished = 1;	
+		pthread_cond_signal (&exitCond);
 		for (i = 0; i < COOKER; i++)
 			sem_post (&cooker);
 		for (i = 0; i < WAITER; i++)
@@ -334,13 +437,28 @@ void * clients (void * arg)
 void * reader (void * arg)
 {		
 	char ch;
+	
 	do
 	{
-		ch = tolower(getch ());
-	} while (ch == 'c');
+		pthread_mutex_lock (&exitMutex); 
+		exitCode = 0;
+		pthread_mutex_unlock (&exitMutex); 
 
-	exitCode = ch;
-	pthread_cond_signal (&exitCond);
+		do
+		{
+			fflush (stdin);
+			ch = getch ();
+			ch = tolower(ch);
+		} while (ch == 'c');
+
+		pthread_mutex_lock (&exitMutex); 
+		exitCode = ch;
+		pthread_cond_signal (&exitCond);
+		pthread_cond_wait (&confirmationCond, &exitMutex);
+		pthread_mutex_unlock (&exitMutex);
+		
+	} while (exitConfirmation != 'N');	/*If false: The user does not want to keep monitoring the flow in the restaurant.*/
+		
 	pthread_exit (NULL);
 }
 
@@ -351,13 +469,13 @@ void * timeCounter (void * arg)
 	
 	do
 	{
-		if ((finished || exitCode))
+		if (finished) 
 			break;
 		seconds = difftime (timeElapsed, beginning);
-		timeElapsed = time (NULL);
+		time (&timeElapsed);
 	} while (seconds != TIME);
 
 	pthread_cond_signal (&exitCond);
 
-	pthread_exit (NULL);
+	pthread_exit (NULL); 
 }
